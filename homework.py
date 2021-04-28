@@ -19,28 +19,27 @@ TELEGRAM_TOKEN = os.environ['TELEGRAM_TOKEN']
 CHAT_ID = os.environ['TELEGRAM_CHAT_ID']
 URL = 'https://praktikum.yandex.ru/api/user_api/homework_statuses/'
 
-HOMEWORK_STATUS_DICT = {
-    'approved':
-    'Ревьюеру всё понравилось, можно приступать к следующему уроку.',
-    'rejected':
-    'К сожалению в работе нашлись ошибки.',
-    'reviewing':
-    'Работу взяли на проверку.'
-}
-
 
 bot = telegram.Bot(token=TELEGRAM_TOKEN)
 
 
 def parse_homework_status(homework):
+    homework_status_dict = {
+        'approved':
+        'Ревьюеру всё понравилось, можно приступать к следующему уроку.',
+        'rejected':
+        'К сожалению в работе нашлись ошибки.',
+        'reviewing':
+        'Работу взяли на проверку.'
+    }
     homework_name = homework.get('homework_name')
     homework_status = homework.get('status')
     if homework_name is None or homework_status is None:
         error_message = f'Имя или статус работы отсутствуют: {homework}'
         logging.error(error_message)
         return error_message
-    if homework_status in HOMEWORK_STATUS_DICT:
-        verdict = HOMEWORK_STATUS_DICT[homework_status]
+    if homework_status in homework_status_dict:
+        verdict = homework_status_dict[homework_status]
     else:
         error_message = f'Неверный статус работы: {homework_status}'
         logging.error(error_message)
@@ -49,8 +48,7 @@ def parse_homework_status(homework):
 
 
 def get_homework_statuses(current_timestamp):
-    if current_timestamp is None:
-        current_timestamp = int(time.time())
+    current_timestamp = current_timestamp or int(time.time())
     try:
         headers = {'Authorization': f'OAuth {PRAKTIKUM_TOKEN}'}
         params = {'from_date': current_timestamp}
@@ -80,9 +78,7 @@ def main():
                     new_homework.get('homeworks')[0]), bot
                 )
             logging.info('Сообщение отправлено.')
-            current_timestamp = new_homework.get(
-                'current_date', current_timestamp
-            )
+            current_timestamp = new_homework.get('current_date')
             time.sleep(300)
 
         except Exception as e:
